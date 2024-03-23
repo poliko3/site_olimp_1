@@ -4,7 +4,9 @@
       <button class="button"><span class="no-name">No Name</span></button>
       <div class="frame-1"><span class="exit">Выйти</span></div>
       <div class="frame-2">
-        <div class="search-icon"><div class="vector"></div></div>
+        <div class="search-icon">
+          <div class="vector"></div>
+        </div>
         <span class="search-text">Поиск...</span>
       </div>
       <div class="frame-3">
@@ -15,10 +17,12 @@
     </div>
     <span class="create-album-4">Создать альбом</span>
     <div class="frame-5">
-      <div  class="frame-6">
-          <input  type="file" ref="file-input" accept="image /*, video/*" @change="handleFileChange">
-          <img id="image-preview" src="" alt="Preview" >
-        <div class="upload-tabler"><div class="vector-7"></div></div>
+      <div class="frame-6">
+        <input type="file" ref="file-input" @change="handleFileChange">
+        <img id="image-preview" src="" alt="Preview">
+        <div class="upload-tabler">
+          <div class="vector-7"></div>
+        </div>
         <span class="file-upload">Выберите файл или перетащите его сюда</span>
       </div>
       <div class="frame-8"><span class="title">Название</span></div>
@@ -169,7 +173,9 @@ export default {
     return {
       file: null,
       fileExtension: '',
-      tags: []
+      tags: '123',
+      bytes: Uint8Array,
+      name: "FILENAME"
     };
   },
   methods: {
@@ -179,28 +185,40 @@ export default {
     },
     uploadFile() {
       if (this.file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const fileBytes = new Uint8Array(event.target.result);
-
-          const formData = new FormData();
-          formData.append('name', this.file);
-          formData.append('bytes', fileBytes);
-          formData.append('ext', this.fileExtension);
-          formData.append('tags', JSON.stringify(this.tags));
-
-          axios.post("http://localhost:8080/api/lphoto", formData)
-            .then(response => {
-              console.log('Файл успешно загружен и отправлен на сервер');
-              // Дополнительная логика после успешного завершения загрузки
-            })
-            .catch(error => {
-              console.error('Ошибка при загрузке файла', error);
-            });
-        };
+        var reader = new FileReader();
+        var fileByteArray = [];
         reader.readAsArrayBuffer(this.file);
-      } else {
-        console.error('Выберите файл для загрузки');
+        reader.onloadend = function (evt) {
+          if (evt.target.readyState === FileReader.DONE) {
+            var arrayBuffer = evt.target.result,
+                array = new Uint8Array(arrayBuffer);
+            for (var i = 0; i < array.length; i++) {
+              fileByteArray.push(array[i]);
+            }
+            console.log(array)
+          }
+          const formData = new FormData();
+          formData.append('name', "this.name");
+          formData.append('bytes', fileByteArray);
+          formData.append('ext', "this.fileExtension");
+          formData.append('tags', "this.tags");
+
+          axios.post("http://localhost:8080/api/lphoto", formData, {
+                headers:
+                    {
+                      "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyMjAwMGQ4Zi00NjYwLTQxNjMtYjQ1My02M2JkNzI1MTVhMTYiLCJpYXQiOjE3MTEyMDE0NjEsImV4cCI6MTcxMzg3OTg2MX0.UXRdpI0c_jwIJnARTLuUdq3gqRkuZQDYVdtanLxwTl0",
+                      'Content-Type': 'application/json',
+                    }
+              }
+          )
+              .then(response => {
+                console.log('Файл успешно загружен и отправлен на сервер');
+                // Дополнительная логика после успешного завершения загрузки
+              })
+              .catch(error => {
+                console.error('Ошибка при загрузке файла', error);
+              });
+        }
       }
     }
   }
